@@ -17,8 +17,9 @@
 <body>
     <div class="container">
         <h1>🔒 Obama Encoder</h1>
-        <div class="status" style="background: #e8f5e9;">Ready! (No password required)</div>
+        <div class="status" style="background: #e8f5e9;">Ready! Password is optional</div>
         <input type="file" id="fileInput">
+        <input type="password" id="passwordInput" placeholder="Password (optional)">
         <button onclick="encode()">Encode</button>
         <div id="status" class="status" style="display:none;"></div>
         <div id="preview" class="preview"></div>
@@ -35,24 +36,43 @@
             img.onload = () => { obamaImg = img; };
             img.src = OBAMA;
         };
-        
+
+        // Simple XOR encryption with password
+        function encryptData(data, password) {
+            if (!password) return data;
+            const key = new TextEncoder().encode(password);
+            const encrypted = new Uint8Array(data.length);
+            for (let i = 0; i < data.length; i++) {
+                encrypted[i] = data[i] ^ key[i % key.length];
+            }
+            return encrypted;
+        }
+
         async function encode() {
             const file = document.getElementById('fileInput').files[0];
+            const password = document.getElementById('passwordInput').value;
             if (!file || !obamaImg) return;
-            
+
             try {
                 show('Reading file...', '#e3f2fd');
                 const fileData = new Uint8Array(await file.arrayBuffer());
-                
+
                 show('Compressing...', '#e3f2fd');
-                const meta = JSON.stringify({name: file.name, size: file.size});
+                const meta = JSON.stringify({name: file.name, size: file.size, encrypted: !!password});
                 const metaBytes = new TextEncoder().encode(meta);
                 const combined = new Uint8Array(metaBytes.length + 1 + fileData.length);
                 combined.set(metaBytes, 0);
                 combined[metaBytes.length] = 0; // null terminator
                 combined.set(fileData, metaBytes.length + 1);
-                
-                const compressed = pako.deflate(combined);
+
+                let compressed = pako.deflate(combined);
+
+                // Encrypt if password provided
+                if (password) {
+                    show('Encrypting...', '#e3f2fd');
+                    compressed = encryptData(compressed, password);
+                }
+
                 console.log('Compressed to', compressed.length, 'bytes');
                 
                 show('Creating image...', '#e3f2fd');
