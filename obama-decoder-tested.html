@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Obama Decoder - Tested</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; background: #f5f5f5; }
+        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        input, button { display: block; margin: 15px 0; padding: 12px; width: calc(100% - 28px); }
+        button { background: #2196F3; color: white; cursor: pointer; border: none; border-radius: 5px; }
+        .status { margin: 20px 0; padding: 15px; border-radius: 5px; }
+        canvas { display: none; }
+        #result { display: none; background: #e8f5e9; padding: 20px; border-radius: 10px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔓 Obama Decoder</h1>
+        <input type="file" id="imageInput" accept="image/*">
+        <button onclick="decode()">Decode</button>
+        <div id="status" class="status" style="display:none;"></div>
+        <canvas id="canvas"></canvas>
+        <div id="result">
+            <h3>✅ File Extracted!</h3>
+            <p><strong>Filename:</strong> <span id="filename"></span></p>
+            <p><strong>Size:</strong> <span id="filesize"></span></p>
+            <button onclick="downloadFile()" style="background: #4CAF50;">Download File</button>
+        </div>
+    </div>
+    <script>
+        let extractedData = null;
+        let extractedName = null;
+        
+        async function decode() {
+            const file = document.getElementById('imageInput').files[0];
+            if (!file) return;
+            
+            try {
+                show('Loading image...', '#e3f2fd');
+                const img = await loadImage(file);
+                
+                show('Extracting data...', '#e3f2fd');
+                const canvas = document.getElementById('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                const imgData = ctx.getImageData(0, 0, img.width, img.height);
+                const pixels = imgData.data;
+                
+                // Extract length (first 32 bits = 4 bytes)
+                let length = 0;
+                for (let i = 0; i < 32; i++) {
+                    const pixelIndex = Math.floor(i / 3);
+                    const channel = i % 3;
+                    const pixelPos = pixelIndex * 4 + channel;
+                    const bit = pixels[pixelPos] & 1;
+                    length = (length << 1) | bit;
+                }
+                
+                console.log('Extracted length:', length, 'bytes');
+                
+                if (length <= 0 || length > 10 * 1024 * 1024) {
+                    throw new Error('Invalid data length: ' + length);
+                }
+                
+                // Extract data
+                const extracted = new Uint8Array(length);
+                let bitPos = 32; // Skip the length bytes
+                
+                for (let i = 0; i < length; i++) {
+                    let byte = 0;
+                    for (let bit = 7; bit >= 0; bit--) {
+                        const pixelIndex = Math.floor(bitPos / 3);
+                        const channel = bitPos % 3;
+                        const pixelPos = pixelIndex * 4 + channel;
+                        const bitValue = pixels[pixelPos] & 1;
+                        byte = (byte << 1) | bitValue;
+                        bitPos++;
+                    }
+                    extracted[i] = byte;
+                }
+                
+                console.log('Extracted', extracted.length, 'bytes');
+                
+                show('Decompressing...', '#e3f2fd');
+                const decompressed = pako.inflate(extracted);
+                
+                // Parse metadata
+                let metaEnd = 0;
+                for (let i = 0; i < decompressed.length; i++) {
+                    if (decompressed[i] === 0) {
+                        metaEnd = i;
+                        break;
+                    }
+                }
+                
+                const metaStr = new TextDecoder().decode(decompressed.slice(0, metaEnd));
+                const meta = JSON.parse(metaStr);
+                const fileData = decompressed.slice(metaEnd + 1);
+                
+                extractedData = fileData;
+                extractedName = meta.name;
+                
+                document.getElementById('filename').textContent = meta.name;
+                document.getElementById('filesize').textContent = formatBytes(meta.size);
+                document.getElementById('result').style.display = 'block';
+                show('✅ Success!', '#e8f5e9');
+                
+            } catch (e) {
+                show('Error: ' + e.message, '#ffebee');
+                console.error(e);
+            }
+        }
+        
+        function loadImage(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        function downloadFile() {
+            if (!extractedData) return;
+            const blob = new Blob([extractedData]);
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = extractedName;
+            a.click();
+            URL.revokeObjectURL(url);
+            show('Downloaded!', '#e8f5e9');
+        }
+        
+        function show(msg, color) {
+            const s = document.getElementById('status');
+            s.textContent = msg;
+            s.style.display = 'block';
+            s.style.background = color;
+        }
+        
+        function formatBytes(bytes) {
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>

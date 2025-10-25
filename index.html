@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Obama Steganography - Hide Files in Images</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 40px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .tools {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 40px 0;
+        }
+        
+        .tool-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+        
+        .tool-card .icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+        
+        .tool-card h2 {
+            font-size: 1.8em;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .tool-card p {
+            color: #666;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+        
+        .tool-card a {
+            display: inline-block;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+        
+        .tool-card a:hover {
+            transform: scale(1.05);
+        }
+        
+        .features {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+        
+        .features h3 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .features ul {
+            list-style: none;
+        }
+        
+        .features li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+            color: #555;
+        }
+        
+        .features li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        
+        .how-it-works {
+            margin: 30px 0;
+        }
+        
+        .how-it-works h3 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .steps {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .step {
+            padding: 20px;
+            border-left: 4px solid #667eea;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .step strong {
+            color: #667eea;
+            font-size: 1.1em;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            border-top: 1px solid #eee;
+        }
+        
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        @media (max-width: 768px) {
+            .tools, .steps {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔒 Obama Steganography</h1>
+            <p>Hide files inside images. Simple. Secure. Instant.</p>
+        </div>
+        
+        <div class="content">
+            <div class="tools">
+                <div class="tool-card">
+                    <div class="icon">🔒</div>
+                    <h2>Encoder</h2>
+                    <p>Hide any file inside an automatically-scaled Obama image</p>
+                    <a href="obama-encoder-tested.html">Open Encoder</a>
+                </div>
+                
+                <div class="tool-card">
+                    <div class="icon">🔓</div>
+                    <h2>Decoder</h2>
+                    <p>Extract hidden files from encoded images</p>
+                    <a href="obama-decoder-tested.html">Open Decoder</a>
+                </div>
+            </div>
+            
+            <div class="features">
+                <h3>✨ Features</h3>
+                <ul>
+                    <li>No file size limits - image auto-scales to fit your data</li>
+                    <li>Instant encoding - Obama image pre-loaded in browser</li>
+                    <li>Works completely offline - no server uploads</li>
+                    <li>Simple LSB steganography with compression</li>
+                    <li>100% client-side JavaScript</li>
+                    <li>No password required (optional encryption coming soon)</li>
+                </ul>
+            </div>
+            
+            <div class="how-it-works">
+                <h3>🔧 How It Works</h3>
+                <div class="steps">
+                    <div class="step">
+                        <strong>Encoding:</strong><br>
+                        Your file is compressed, then each bit is hidden in the least significant bit (LSB) of RGB channels. The Obama image automatically scales up if needed.
+                    </div>
+                    <div class="step">
+                        <strong>Decoding:</strong><br>
+                        The decoder extracts the hidden bits from the image pixels, decompresses the data, and recovers your original file perfectly.
+                    </div>
+                    <div class="step">
+                        <strong>Privacy:</strong><br>
+                        Everything runs in your browser. No data is sent to any server. Your files never leave your computer.
+                    </div>
+                    <div class="step">
+                        <strong>Compatibility:</strong><br>
+                        Works in any modern browser. Encoded images are standard PNGs that can be shared anywhere.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Made with steganography and JavaScript</p>
+            <p><a href="https://github.com/yourusername/obama-steganography" target="_blank">View on GitHub</a></p>
+        </div>
+    </div>
+</body>
+</html>
