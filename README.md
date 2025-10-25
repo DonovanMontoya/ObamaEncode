@@ -8,6 +8,7 @@ Hide files inside images using steganography. Simple, secure, and runs entirely 
 
 - **No File Size Limits** - Image automatically scales to fit your data
 - **Instant Encoding** - Obama image pre-loaded for zero wait time
+- **Optional Password Protection** - Encrypt your data with a password (XOR cipher)
 - **100% Client-Side** - No server uploads, complete privacy
 - **Offline Capable** - Works without internet connection
 - **Simple LSB Steganography** - Uses least significant bit encoding
@@ -36,36 +37,40 @@ Hide files inside images using steganography. Simple, secure, and runs entirely 
 
 ### Encoding (Hiding a File)
 
-1. Open `obama-encoder-tested.html`
+1. Open `obama-encoder.html`
 2. Click "Choose File" and select any file
-3. Click "Encode"
-4. Download the generated Obama image with your file hidden inside
+3. (Optional) Enter a password to encrypt your data
+4. Click "Encode"
+5. Download the generated Obama image with your file hidden inside
 
 ### Decoding (Extracting a File)
 
-1. Open `obama-decoder-tested.html`
+1. Open `obama-decoder.html`
 2. Upload the encoded Obama image
-3. Click "Decode"
-4. Download your original file
+3. (Optional) Enter the password if the file was encrypted
+4. Click "Decode"
+5. Download your original file
 
 ## 🔧 How It Works
 
 ### Encoding Process
 1. File is read as binary data
-2. Metadata (filename, size) is added
+2. Metadata (filename, size, encrypted flag) is added
 3. Data is compressed using pako (zlib)
-4. Length prefix (4 bytes) is prepended
-5. Each bit is stored in LSB of R, G, or B channels
-6. Obama image is scaled up if needed to fit all data
-7. Result is saved as PNG
+4. (Optional) Compressed data is encrypted with password using XOR cipher
+5. Length prefix (4 bytes) is prepended
+6. Each bit is stored in LSB of R, G, or B channels
+7. Obama image is scaled up if needed to fit all data
+8. Result is saved as PNG
 
 ### Decoding Process
 1. Encoded image is loaded
 2. Length is read from first 32 bits
 3. Data bits are extracted from RGB LSBs
-4. Data is decompressed
-5. Metadata is parsed
-6. Original file is reconstructed
+4. (Optional) Data is decrypted with password if provided
+5. Data is decompressed
+6. Metadata is parsed
+7. Original file is reconstructed
 
 ### Technical Details
 
@@ -79,8 +84,8 @@ Hide files inside images using steganography. Simple, secure, and runs entirely 
 ```
 obama-steganography/
 ├── index.html                    # Landing page
-├── obama-encoder-tested.html     # Encoder tool
-├── obama-decoder-tested.html     # Decoder tool
+├── obama-encoder.html            # Encoder tool
+├── obama-decoder.html            # Decoder tool
 └── README.md                     # This file
 ```
 
@@ -89,7 +94,7 @@ obama-steganography/
 - **Pure JavaScript** - No frameworks
 - **HTML5 Canvas API** - Image manipulation
 - **pako.js** - Data compression (loaded from CDN)
-- **Web Crypto API** - (Future: encryption support)
+- **XOR Cipher** - Optional password-based encryption
 
 ## 🔒 Privacy & Security
 
@@ -116,14 +121,16 @@ MIT License - feel free to use this for any purpose.
 - **Lossy formats**: Don't re-compress the encoded PNG as JPEG (will destroy hidden data)
 - **Large files**: Browser memory limits may affect very large files (>100MB)
 - **Detection**: LSB steganography is detectable with steganalysis tools
+- **Encryption**: Uses simple XOR cipher - suitable for basic protection, not cryptographically secure
 
 ## 🎯 Future Enhancements
 
-- [ ] Optional password encryption
+- [x] Optional password encryption
 - [ ] Multiple cover image options
 - [ ] Drag & drop file upload
 - [ ] Progress bars for large files
 - [ ] Advanced LSB algorithms
+- [ ] Stronger encryption (AES-256)
 - [ ] Mobile app version
 
 ## 🙏 Credits
