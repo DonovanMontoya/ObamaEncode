@@ -34,12 +34,17 @@
         
         async function decode() {
             const file = document.getElementById('imageInput').files[0];
-            if (!file) return;
-            
+            if (!file) {
+                show('Please select an image file', '#ffebee');
+                return;
+            }
+
             try {
                 show('Loading image...', '#e3f2fd');
                 const img = await loadImage(file);
-                
+
+                console.log('Image loaded:', img.width + 'x' + img.height);
+
                 show('Extracting data...', '#e3f2fd');
                 const canvas = document.getElementById('canvas');
                 canvas.width = img.width;
@@ -48,8 +53,13 @@
                 ctx.drawImage(img, 0, 0);
                 const imgData = ctx.getImageData(0, 0, img.width, img.height);
                 const pixels = imgData.data;
+
+                console.log('Total pixels:', img.width * img.height);
+                console.log('Available bits:', img.width * img.height * 3);
                 
                 // Extract length (first 32 bits = 4 bytes)
+                // The encoder stores length as: byte0=bits31-24, byte1=bits23-16, byte2=bits15-8, byte3=bits7-0
+                // Each byte is encoded MSB first
                 let length = 0;
                 for (let i = 0; i < 32; i++) {
                     const pixelIndex = Math.floor(i / 3);
@@ -58,20 +68,21 @@
                     const bit = pixels[pixelPos] & 1;
                     length = (length << 1) | bit;
                 }
-                
+
                 console.log('Extracted length:', length, 'bytes');
-                
+
                 if (length <= 0 || length > 10 * 1024 * 1024) {
-                    throw new Error('Invalid data length: ' + length);
+                    throw new Error('Invalid data length: ' + length + '. The image may not contain valid encoded data.');
                 }
-                
-                // Extract data
+
+                // Extract data - each byte is encoded MSB first
                 const extracted = new Uint8Array(length);
-                let bitPos = 32; // Skip the length bytes
-                
+                let bitPos = 32; // Start after the 32-bit length header
+
                 for (let i = 0; i < length; i++) {
                     let byte = 0;
-                    for (let bit = 7; bit >= 0; bit--) {
+                    // Read 8 bits for this byte
+                    for (let j = 0; j < 8; j++) {
                         const pixelIndex = Math.floor(bitPos / 3);
                         const channel = bitPos % 3;
                         const pixelPos = pixelIndex * 4 + channel;
@@ -83,10 +94,16 @@
                 }
                 
                 console.log('Extracted', extracted.length, 'bytes');
-                
+
                 show('Decompressing...', '#e3f2fd');
-                const decompressed = pako.inflate(extracted);
-                
+                let decompressed;
+                try {
+                    decompressed = pako.inflate(extracted);
+                    console.log('Decompressed to', decompressed.length, 'bytes');
+                } catch (e) {
+                    throw new Error('Decompression failed: ' + e.message + '. The image may not contain valid encoded data.');
+                }
+
                 // Parse metadata
                 let metaEnd = 0;
                 for (let i = 0; i < decompressed.length; i++) {
@@ -95,22 +112,35 @@
                         break;
                     }
                 }
-                
+
+                if (metaEnd === 0) {
+                    throw new Error('No metadata found in decompressed data');
+                }
+
                 const metaStr = new TextDecoder().decode(decompressed.slice(0, metaEnd));
-                const meta = JSON.parse(metaStr);
+                console.log('Metadata string:', metaStr);
+
+                let meta;
+                try {
+                    meta = JSON.parse(metaStr);
+                } catch (e) {
+                    throw new Error('Invalid metadata JSON: ' + e.message);
+                }
+
                 const fileData = decompressed.slice(metaEnd + 1);
-                
+                console.log('File data size:', fileData.length, 'bytes');
+
                 extractedData = fileData;
                 extractedName = meta.name;
-                
+
                 document.getElementById('filename').textContent = meta.name;
                 document.getElementById('filesize').textContent = formatBytes(meta.size);
                 document.getElementById('result').style.display = 'block';
                 show('✅ Success!', '#e8f5e9');
-                
+
             } catch (e) {
-                show('Error: ' + e.message, '#ffebee');
-                console.error(e);
+                show('❌ Error: ' + e.message, '#ffebee');
+                console.error('Decoding error:', e);
             }
         }
         
