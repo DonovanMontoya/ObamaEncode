@@ -53,13 +53,6 @@
             const password = document.getElementById('passwordInput').value;
             if (!file || !obamaImg) return;
 
-            // File size validation (10MB limit)
-            const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-            if (file.size > MAX_FILE_SIZE) {
-                show('❌ File too large! Maximum size is 10MB. Your file is ' + formatBytes(file.size), '#ffebee');
-                return;
-            }
-
             try {
                 show('Reading file...', '#e3f2fd');
                 const fileData = new Uint8Array(await file.arrayBuffer());
@@ -130,16 +123,12 @@
                 }
                 
                 ctx.putImageData(imgData, 0, 0);
-
-                // Use toBlob() instead of toDataURL() to prevent browser re-encoding
-                canvas.toBlob((blob) => {
-                    result = blob;
-                    const previewUrl = URL.createObjectURL(blob);
-                    document.getElementById('preview').innerHTML =
-                        '<p>Encoded Obama (' + w + 'x' + h + '):</p><img src="' + previewUrl + '">';
-                    document.getElementById('downloadBtn').style.display = 'block';
-                    show('✅ Done! File hidden in image.', '#e8f5e9');
-                }, 'image/png');
+                result = canvas.toDataURL('image/png');
+                
+                document.getElementById('preview').innerHTML = 
+                    '<p>Encoded Obama (' + w + 'x' + h + '):</p><img src="' + result + '">';
+                document.getElementById('downloadBtn').style.display = 'block';
+                show('✅ Done! File hidden in image.', '#e8f5e9');
                 
             } catch (e) {
                 show('Error: ' + e.message, '#ffebee');
@@ -148,13 +137,10 @@
         }
         
         function download() {
-            if (!result) return;
-            const url = URL.createObjectURL(result);
             const a = document.createElement('a');
-            a.href = url;
+            a.href = result;
             a.download = 'obama-encoded.png';
             a.click();
-            URL.revokeObjectURL(url);
         }
         
         function show(msg, color) {
@@ -162,13 +148,6 @@
             s.textContent = msg;
             s.style.display = 'block';
             s.style.background = color;
-        }
-
-        function formatBytes(bytes) {
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
         }
     </script>
 </body>
