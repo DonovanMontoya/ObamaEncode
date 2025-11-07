@@ -48,11 +48,31 @@
             const file = document.getElementById('imageInput').files[0];
             const password = document.getElementById('passwordInput').value;
             if (!file) return;
-            
+
+            // Validate file is an image
+            if (!file.type.startsWith('image/')) {
+                show('❌ Please select an image file', '#ffebee');
+                return;
+            }
+
+            // Validate image file size (50MB limit to prevent memory issues)
+            const MAX_IMAGE_SIZE = 50 * 1024 * 1024;
+            if (file.size > MAX_IMAGE_SIZE) {
+                show('❌ Image file too large! Maximum size is 50MB', '#ffebee');
+                return;
+            }
+
             try {
                 show('Loading image...', '#e3f2fd');
                 const img = await loadImage(file);
-                
+
+                // Validate image dimensions
+                const MAX_DIMENSION = 8192;
+                if (img.width > MAX_DIMENSION || img.height > MAX_DIMENSION) {
+                    show('❌ Image dimensions too large! Maximum dimension is ' + MAX_DIMENSION + 'px', '#ffebee');
+                    return;
+                }
+
                 show('Extracting data...', '#e3f2fd');
                 const canvas = document.getElementById('canvas');
                 canvas.width = img.width;
@@ -148,17 +168,9 @@
             }
         }
         
-        function loadImage(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = e => {
-                    const img = new Image();
-                    img.onload = () => resolve(img);
-                    img.onerror = reject;
-                    img.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            });
+        // Use createImageBitmap() to avoid browser re-encoding via data URLs
+        async function loadImage(file) {
+            return await createImageBitmap(file);
         }
         
         function downloadFile() {
