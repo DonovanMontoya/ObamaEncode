@@ -77,10 +77,20 @@
                 const canvas = document.getElementById('canvas');
                 canvas.width = img.width;
                 canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
+                // Use specific context settings to prevent color management
+                const ctx = canvas.getContext('2d', {
+                    willReadFrequently: true,
+                    colorSpace: 'srgb',
+                    alpha: true
+                });
+                // Disable image smoothing to preserve exact pixels
+                ctx.imageSmoothingEnabled = false;
                 ctx.drawImage(img, 0, 0);
                 const imgData = ctx.getImageData(0, 0, img.width, img.height);
                 const pixels = imgData.data;
+
+                console.log('Image dimensions:', img.width, 'x', img.height);
+                console.log('First 10 pixel values:', Array.from(pixels.slice(0, 10)));
                 
                 // Extract length (first 32 bits = 4 bytes)
                 let length = 0;
@@ -93,9 +103,9 @@
                 }
                 
                 console.log('Extracted length:', length, 'bytes');
-                
+
                 if (length <= 0 || length > 10 * 1024 * 1024) {
-                    throw new Error('Invalid data length: ' + length);
+                    throw new Error('Invalid data length: ' + length + ' bytes. This image may not contain encoded data, or it was corrupted during download. Try: 1) Re-encoding the file, 2) Right-click "Save image as..." instead of using download button, 3) Use a different browser.');
                 }
                 
                 // Extract data
@@ -129,10 +139,11 @@
                 try {
                     decompressed = pako.inflate(toDecompress);
                 } catch (e) {
+                    console.error('Decompression error:', e);
                     if (password) {
-                        throw new Error('Decompression failed. Wrong password?');
+                        throw new Error('Decompression failed. Wrong password, or image was corrupted. Try: 1) Check password, 2) Re-download the image using "Save image as..." (right-click), 3) Re-encode with a different browser.');
                     } else {
-                        throw new Error('Decompression failed. File may be encrypted - try entering the password.');
+                        throw new Error('Decompression failed. File may be encrypted (try entering password), or the image was corrupted during download. Try: 1) Right-click "Save image as..." instead of using download button, 2) Use a different browser.');
                     }
                 }
 

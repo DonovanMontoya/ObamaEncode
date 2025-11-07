@@ -107,7 +107,14 @@
                 const canvas = document.getElementById('canvas');
                 canvas.width = w;
                 canvas.height = h;
-                const ctx = canvas.getContext('2d');
+                // Use specific context settings to prevent color management
+                const ctx = canvas.getContext('2d', {
+                    willReadFrequently: true,
+                    colorSpace: 'srgb',
+                    alpha: true
+                });
+                // Disable image smoothing to preserve exact pixels
+                ctx.imageSmoothingEnabled = false;
                 ctx.drawImage(obamaImg, 0, 0, w, h);
                 
                 const imgData = ctx.getImageData(0, 0, w, h);
@@ -131,15 +138,38 @@
                 
                 ctx.putImageData(imgData, 0, 0);
 
+                // Verify encoding immediately by checking a few pixels
+                console.log('Verifying encoding...');
+                const verifyData = ctx.getImageData(0, 0, w, h);
+                const verifyPixels = verifyData.data;
+                let mismatch = false;
+                for (let i = 0; i < Math.min(100, pixels.length); i++) {
+                    if (pixels[i] !== verifyPixels[i]) {
+                        mismatch = true;
+                        console.error('Pixel mismatch at', i, ':', pixels[i], '!=', verifyPixels[i]);
+                        break;
+                    }
+                }
+                if (mismatch) {
+                    show('❌ Verification failed! Canvas is modifying pixels. Try a different browser.', '#ffebee');
+                    return;
+                }
+                console.log('✓ Encoding verified');
+
                 // Use toBlob() instead of toDataURL() to prevent browser re-encoding
+                // Force PNG with no compression optimization
                 canvas.toBlob((blob) => {
+                    if (!blob) {
+                        show('❌ Failed to create image blob', '#ffebee');
+                        return;
+                    }
                     result = blob;
                     const previewUrl = URL.createObjectURL(blob);
                     document.getElementById('preview').innerHTML =
-                        '<p>Encoded Obama (' + w + 'x' + h + '):</p><img src="' + previewUrl + '">';
+                        '<p>Encoded Obama (' + w + 'x' + h + ', ' + formatBytes(blob.size) + '):</p><img src="' + previewUrl + '"><p style="color:#666;font-size:0.9em;">⚠️ Right-click the image above and "Save image as..." for best results, or use the download button below.</p>';
                     document.getElementById('downloadBtn').style.display = 'block';
                     show('✅ Done! File hidden in image.', '#e8f5e9');
-                }, 'image/png');
+                }, 'image/png', 1.0);
                 
             } catch (e) {
                 show('Error: ' + e.message, '#ffebee');
